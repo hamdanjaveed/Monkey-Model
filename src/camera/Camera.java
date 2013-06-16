@@ -49,7 +49,6 @@ public class Camera {
 	}
 
 	public void lookThrough() {
-		glLoadIdentity();
 		glRotatef(pitch, 1.0f, 0.0f, 0.0f);
 		glRotatef(yaw, 0.0f, 1.0f, 0.0f);
 		glTranslatef(position.x, position.y, position.z);
