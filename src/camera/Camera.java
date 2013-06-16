@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class Camera {
 
-	private Vector3f position;
+	public Vector3f position;
 	private float yaw;
 	private float pitch;
 

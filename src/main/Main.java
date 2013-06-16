@@ -4,6 +4,7 @@ import camera.Camera;
 import model.Face;
 import model.Model;
 import model.OBJLoader;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -14,6 +15,7 @@ import org.lwjgl.util.vector.Vector3f;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.util.glu.GLU.gluPerspective;
@@ -41,6 +43,8 @@ public class Main {
 	private long lastFrameSystemTime;
 
 	private int monkeyDisplayListHandle;
+
+	private Vector3f lightPosition;
 
 	public Main() {
 		initializeProgram();
@@ -79,12 +83,26 @@ public class Main {
 		// switch back to the model view matrix
 		glMatrixMode(GL_MODELVIEW);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-		glEnable(GL_DEPTH_TEST);
+		initializeLighting();
 
 		// UNCOMMENT: if you want to use shaders
 		//initializeShaders();
+	}
+
+	private void initializeLighting() {
+		lightPosition = new Vector3f(-10.0f, 0.0f, 0.0f);
+
+		glShadeModel(GL_SMOOTH);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glLightModel(GL_LIGHT_MODEL_AMBIENT, createFloatBuffer(new float[] { 0.05f, 0.05f, 0.05f, 1.0f }));
+		glLight(GL_LIGHT0, GL_DIFFUSE, createFloatBuffer(new float[]{1.0f, 1.0f, 1.0f, 1.0f}));
+		glLight(GL_LIGHT0, GL_POSITION, createFloatBuffer(new float[] { lightPosition.x, lightPosition.y, lightPosition.z, 1.0f }));
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glEnable(GL_COLOR_MATERIAL);
+		glColorMaterial(GL_FRONT, GL_DIFFUSE);
 	}
 
 	// UNCOMMENT: if you want to use shaders
@@ -150,7 +168,7 @@ public class Main {
 			Model model = null;
 
 			try {
-				model = OBJLoader.loadModelFromFile(new File("src/model/monkey.obj"));
+				model = OBJLoader.loadModelFromFile(new File("src/model/monkeyuhd.obj"));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				exitProgramWithErrorCode(1);
@@ -160,7 +178,7 @@ public class Main {
 			}
 
 			glBegin(GL_TRIANGLES); {
-				glColor3f(1, 1, 1);
+				glColor3f(0.4f, 0.75f, 0.6f);
 				for (Face face : model.faces) {
 					Vector3f normal1 = model.normals.get((int) face.normalIndices.x - 1);
 					glNormal3f(normal1.x, normal1.y, normal1.z);
@@ -237,15 +255,21 @@ public class Main {
 		if (Keyboard.isKeyDown(Keyboard.KEY_M)) {
 			Mouse.setGrabbed(!Mouse.isGrabbed());
 		}
+		if (Keyboard.isKeyDown(Keyboard.KEY_F)) {
+			lightPosition.x = -camera.position.x;
+			lightPosition.y = -camera.position.y;
+			lightPosition.z = -camera.position.z;
+		}
+
+		glLight(GL_LIGHT0, GL_POSITION, createFloatBuffer(new float[] { lightPosition.x, lightPosition.y, lightPosition.z, 1.0f }));
 	}
 
-	// uncomment if you need to create FloatBuffers
-	/*private FloatBuffer createFloatBuffer(float[] data) {
+	private FloatBuffer createFloatBuffer(float[] data) {
 		FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(data.length);
 		floatBuffer.put(data);
 		floatBuffer.flip();
 		return floatBuffer;
-	}*/
+	}
 
 	private void exitProgram() {
 		destroyBuffers();
