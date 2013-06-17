@@ -1,3 +1,37 @@
-void main() {
+varying vec3 color;
 
+uniform float diffuseIntensityModifier;
+
+void main() {
+	// the current vertex
+	vec3 vertexPosition = (gl_ModelViewMatrix * gl_Vertex).xyz;
+	// a vector that goes from the current vertex to the light position
+	vec3 lightDirection = normalize(gl_LightSource[0].position.xyz - vertexPosition);
+	// get the normal vector
+	vec3 surfaceNormal = (gl_NormalMatrix * gl_Normal).xyz;
+
+	// get the intensity of the light, if the dot product is negative, use 0.0
+	float diffuseLightIntensity = diffuseIntensityModifier * max(0.0, dot(surfaceNormal, lightDirection));
+
+	// set the color's diffuse light
+	color.rgb = diffuseLightIntensity * gl_Color.rgb;
+	// add the ambient color
+	color += gl_LightModel.ambient.rgb;
+
+	// SPECULAR
+
+	// calculate the direction of the reflected light
+	vec3 reflectionDirection = normalize(reflect(-lightDirection, surfaceNormal));
+
+	// get the intensity of the reflection
+	float specular = max(0.0, dot(surfaceNormal, reflectionDirection));
+	// if we have lighting
+	if (diffuseLightIntensity != 0.0) {
+		float fspecular = pow(specular, gl_FrontMaterial.shininess);
+		// add the specular to the color
+		color.rgb += vec3(fspecular, fspecular, fspecular);
+	}
+
+	// get the vertex in clip space
+	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }
