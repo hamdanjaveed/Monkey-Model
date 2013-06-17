@@ -12,12 +12,11 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.vector.Vector3f;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 public class Main {
@@ -34,9 +33,10 @@ public class Main {
 	private static final float FAR_PLANE     = 100.0f;
 
 	// shaders
-	//private int shaderProgram;
-	//private int vertexShader;
-	//private int fragmentShader;
+	private int shaderProgram;
+	private int vertexShader;
+	private int fragmentShader;
+	private int diffuseModifierUniform;
 
 	private Camera camera;
 
@@ -85,8 +85,7 @@ public class Main {
 
 		initializeLighting();
 
-		// UNCOMMENT: if you want to use shaders
-		//initializeShaders();
+		initializeShaders();
 	}
 
 	private void initializeLighting() {
@@ -105,8 +104,6 @@ public class Main {
 		glColorMaterial(GL_FRONT, GL_DIFFUSE);
 	}
 
-	// UNCOMMENT: if you want to use shaders
-	/*
 	private void initializeShaders() {
 		// create the program and shaders
 		shaderProgram = glCreateProgram();
@@ -118,6 +115,8 @@ public class Main {
 		StringBuilder fragmentShaderSource = loadShaderSourceFromPath("src/shader/shader.fragment");
 
 		// compile the shaders
+		System.out.println("VS: " + vertexShader);
+		System.out.println("FS: " + fragmentShader);
 		compileShader(vertexShader, vertexShaderSource);
 		compileShader(fragmentShader, fragmentShaderSource);
 
@@ -128,6 +127,8 @@ public class Main {
 		// link and validate the program
 		glLinkProgram(shaderProgram);
 		glValidateProgram(shaderProgram);
+
+		diffuseModifierUniform = glGetUniformLocation(shaderProgram, "diffuseIntensityModifier");
 	}
 
 	private StringBuilder loadShaderSourceFromPath(String path) {
@@ -150,8 +151,8 @@ public class Main {
 		glShaderSource(shaderHandle, shaderSource);
 		glCompileShader(shaderHandle);
 		if (glGetShaderi(shaderHandle, GL_COMPILE_STATUS) == GL_FALSE)
-			System.out.println("Not able to compile shader " + shaderHandle + "\n" + "With source: " + shaderSource);
-	}*/
+			System.out.println("Not able to compile shader " + shaderHandle);
+	}
 
 	private void initializeVariables() {
 		camera = new Camera(0.0f, 0.0f, 0.0f);
@@ -179,6 +180,7 @@ public class Main {
 
 			glBegin(GL_TRIANGLES); {
 				glColor3f(0.4f, 0.75f, 0.6f);
+				glMaterialf(GL_FRONT, GL_SHININESS, 128.0f);
 				for (Face face : model.faces) {
 					Vector3f normal1 = model.normals.get((int) face.normalIndices.x - 1);
 					glNormal3f(normal1.x, normal1.y, normal1.z);
@@ -201,15 +203,14 @@ public class Main {
 
 	private void programLoop() {
 		while (!Display.isCloseRequested() && !Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
-			// UNCOMMENT: if you want to use shaders
-			// glUseProgram(shaderProgram);
+			glUseProgram(shaderProgram);
+			glUniform1f(diffuseModifierUniform, 1.0f);
 
 			int delta = getDelta();
 			renderGL();
 			update(delta);
 
-			// UNCOMMENT: if you want to use shaders
-			//glUseProgram(0);
+			glUseProgram(0);
 			Display.update();
 			Display.sync(TARGET_FRAME_RATE);
 		}
@@ -255,12 +256,10 @@ public class Main {
 		if (Keyboard.isKeyDown(Keyboard.KEY_M)) {
 			Mouse.setGrabbed(!Mouse.isGrabbed());
 		}
-		if (Keyboard.isKeyDown(Keyboard.KEY_F)) {
-			lightPosition.x = -camera.position.x;
-			lightPosition.y = -camera.position.y;
-			lightPosition.z = -camera.position.z;
-		}
 
+		lightPosition.x = -camera.position.x;
+		lightPosition.y = -camera.position.y;
+		lightPosition.z = -camera.position.z;
 		glLight(GL_LIGHT0, GL_POSITION, createFloatBuffer(new float[] { lightPosition.x, lightPosition.y, lightPosition.z, 1.0f }));
 	}
 
@@ -274,8 +273,7 @@ public class Main {
 	private void exitProgram() {
 		destroyBuffers();
 
-		// UNCOMMENT: if you want to use shaders
-		//destroyShaders();
+		destroyShaders();
 
 		Display.destroy();
 		System.exit(0);
@@ -289,16 +287,14 @@ public class Main {
 	}
 
 	private void destroyBuffers() {
-		// TODO: destroy buffers
+		glDeleteLists(monkeyDisplayListHandle, 1);
 	}
 
-	// UNCOMMENT: if you want to use shaders
-	/*
 	private void destroyShaders() {
 		glDeleteProgram(shaderProgram);
 		glDeleteShader(vertexShader);
 		glDeleteShader(fragmentShader);
-	}*/
+	}
 
 
 	private long getSystemTimeInMilliseconds() {
