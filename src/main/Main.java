@@ -63,6 +63,7 @@ public class Main {
 		try {
 			Display.setDisplayMode(new DisplayMode(DISPLAY_WIDTH, DISPLAY_HEIGHT));
 			Display.setTitle(DISPLAY_TITLE);
+			Display.setVSyncEnabled(true);
 			Display.create();
 			Mouse.setGrabbed(true);
 		} catch(LWJGLException exception) {
@@ -78,7 +79,7 @@ public class Main {
 		// reset the projection matrix
 		glLoadIdentity();
 
-		gluPerspective(FIELD_OF_VIEW, (float) (DISPLAY_WIDTH / DISPLAY_HEIGHT), NEAR_PLANE, FAR_PLANE);
+		gluPerspective(FIELD_OF_VIEW, (float) DISPLAY_WIDTH / DISPLAY_HEIGHT, NEAR_PLANE, FAR_PLANE);
 
 		// switch back to the model view matrix
 		glMatrixMode(GL_MODELVIEW);
@@ -91,13 +92,8 @@ public class Main {
 	private void initializeLighting() {
 		lightPosition = new Vector3f(-10.0f, 0.0f, 0.0f);
 
-		glShadeModel(GL_SMOOTH);
 		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
 		glLightModel(GL_LIGHT_MODEL_AMBIENT, createFloatBuffer(new float[] { 0.05f, 0.05f, 0.05f, 1.0f }));
-		glLight(GL_LIGHT0, GL_DIFFUSE, createFloatBuffer(new float[]{1.0f, 1.0f, 1.0f, 1.0f}));
-		glLight(GL_LIGHT0, GL_POSITION, createFloatBuffer(new float[] { lightPosition.x, lightPosition.y, lightPosition.z, 1.0f }));
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glEnable(GL_COLOR_MATERIAL);
